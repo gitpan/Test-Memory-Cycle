@@ -1,35 +1,43 @@
-#$Id: Cycle.pm,v 1.2 2003/12/15 05:34:49 andy Exp $
-
 package Test::Memory::Cycle;
 
 =head1 NAME
 
-Test::Memory::Cycle - check for circular memory references
+Test::Memory::Cycle - Check for memory leaks and circular memory references
 
 =head1 VERSION
 
-Version 0.01
+Version 0.02
 
-    $Header: /home/cvs/test-memory-cycle/Cycle.pm,v 1.2 2003/12/15 05:34:49 andy Exp $
+    $Header: /home/cvs/test-memory-cycle/Cycle.pm,v 1.5 2004/01/20 05:05:03 andy Exp $
 
 =cut
 
-our $VERSION = "0.01";
+our $VERSION = "0.02";
 
 =head1 SYNOPSIS
 
-Blah blah blah.  Don't want to leave circular memory references
-because they cause leaks.
+Perl's garbage collection has one big problem: Circular references
+can't get cleaned up.  A circular reference can be as simple as two
+objects that refer to each other:
+
+    my $mom = {
+        name => "Marilyn Lester",
+    };
+
+    my $me = {
+        name => "Andy Lester",
+        mother => $mom,
+    };
+    $mom->{son} = $me;
+
+C<Test::Memory::Cycle> is built on top of C<Devel::Cycle> to give
+you an easy way to check for these circular references.
 
     use Test::Memory::Cycle;
 
     my $object = new MyObject;
-    ... Do stuff ...
+    # Do stuff with the object.
     memory_cycle_ok( $object );
-
-C<Test::Memory::Cycle> relies on Lincoln Stein's L<Devel::Cycle>
-to do the dirty work.  I've just put it in a pretty C<Test::*>
-package.
 
 =cut
 
@@ -63,37 +71,33 @@ sub memory_cycle_ok {
     my $ref = shift;
     my $msg = shift;
 
-    my $ok = 1;
     my $cycle_no = 0;
+    my @diags;
 
+    # Callback function that is called once for each memory cycle found.
     my $callback = sub {
 	my $path = shift;
-
-	if ( $ok ) {
-	    $ok = 0;
-	    $Test->ok( $ok, $msg );
-	}
-
 	$cycle_no++;
-	$Test->diag( "Cycle ($cycle_no)" );
+	push( @diags, "Cycle #$cycle_no" );
 	foreach (@$path) {
 	    my ($type,$index,$ref,$value) = @$_;
 
 	    my $str = "Unknown! This should never happen!";
 	    my $refdisp = _ref_shortname( $ref );
 	    my $valuedisp = _ref_shortname( $value );
-
 	    
-	    $str = sprintf("\t%30s => %-30s\n",$refdisp,$valuedisp)               if $type eq 'SCALAR';
-	    $str = sprintf("\t%30s => %-30s\n","${refdisp}->[$index]",$valuedisp) if $type eq 'ARRAY';
-	    $str = sprintf("\t%30s => %-30s\n","${refdisp}->{$index}",$valuedisp) if $type eq 'HASH';
+	    $str = sprintf("    %s => %s",$refdisp,$valuedisp)               if $type eq 'SCALAR';
+	    $str = sprintf("    %s => %s","${refdisp}->[$index]",$valuedisp) if $type eq 'ARRAY';
+	    $str = sprintf("    %s => %s","${refdisp}->{$index}",$valuedisp) if $type eq 'HASH';
 
-	    $Test->diag( $str );
+            push( @diags, $str );
 	}
     };
 
     find_cycle( $ref, $callback );
-    $Test->ok( $ok, $msg ) if $ok;
+    my $ok = !$cycle_no;
+    $Test->ok( $ok, $msg );
+    $Test->diag( join( "\n", @diags, "" ) ) unless $ok;
 
     return $ok;
 } # memory_cycle_ok
@@ -109,7 +113,7 @@ sub _ref_shortname {
 	my $sigil = ref($ref) . " ";
 	$sigil = '%' if $sigil eq "HASH ";
 	$sigil = '@' if $sigil eq "ARRAY ";
-	$sigil = '$' if $sigil eq "SCALAR ";
+	$sigil = '$' if $sigil eq "REF ";
 	$refdisp = $shortnames{ $refstr } = $sigil . $new_shortname++;
     }
 
@@ -122,7 +126,7 @@ Written by Andy Lester, C<< <andy@petdance.com> >>.
 
 =head1 COPYRIGHT
 
-Copyright 2003, Andy Lester, All Rights Reserved.
+Copyright 2004, Andy Lester, All Rights Reserved.
 
 You may use, modify, and distribute this package under the
 same terms as Perl itself.
