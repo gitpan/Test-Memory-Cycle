@@ -1,8 +1,9 @@
-# $Id: family-object.t,v 1.1 2004/01/20 04:53:46 andy Exp $
+#!perl -T
+
 use strict;
 use warnings FATAL => 'all';
 
-use Test::More tests => 2;
+use Test::More tests => 3;
 use Test::Builder::Tester;
 use Getopt::Long;
 
@@ -35,3 +36,7 @@ test_diag( '    Getopt::Long::Parser C->{dem} => %D' );
 test_diag( '    %D->{dis} => Getopt::Long::Parser A' );
 memory_cycle_ok( $dis, "Object family" );
 test_test( "Object family testing" );
+
+test_out( "ok 1 - Object family has Cycles" );
+memory_cycle_exists( $dis, "Object family has Cycles" );
+test_test( "Object family testing with cycles" );

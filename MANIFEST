@@ -5,6 +5,7 @@ META.yml
 Makefile.PL
 README
 t/00.load.t
+t/cycle-exists.t
 t/family-array.t
 t/family-hash.t
 t/family-object.t

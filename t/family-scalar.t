@@ -1,8 +1,9 @@
-# $Id: family-scalar.t,v 1.1 2004/01/20 04:53:46 andy Exp $
+#!perl -T
+
 use strict;
 use warnings FATAL => 'all';
 
-use Test::More tests => 5;
+use Test::More tests => 8;
 use Test::Builder::Tester;
 
 BEGIN {
@@ -19,6 +20,10 @@ test_diag( '    $A => $A' );
 memory_cycle_ok( $me, "Scalar Family" );
 test_test( "Simple loopback" );
 
+test_out( "ok 1 - Scalar Family has Cycles" );
+memory_cycle_exists( $me, "Scalar Family has Cycles" );
+test_test( "Simple loopback testing for cycles" );
+
 my $myself = \$me;
 $me = \$myself;
 
@@ -29,6 +34,10 @@ test_diag( '    $A => $B' );
 test_diag( '    $B => $A' );
 memory_cycle_ok( $myself ); # Test non-comments
 test_test( "Simple loopback to myself" );
+
+test_out( "ok 1" );
+memory_cycle_exists( $myself ); # Test non-comments
+test_test( "Simple loopback to myself with cycles" );
 
 # Order matters
 test_out( "not ok 1" );
@@ -56,3 +65,7 @@ test_diag( '    @C->[3] => $D' );
 test_diag( '    $D => @C' );
 memory_cycle_ok( $sybil ); # Test non-comments
 test_test( "Sybil and her sisters" );
+
+test_out( "ok 1" );
+memory_cycle_exists( $sybil ); # Test non-comments
+test_test( "Sybil and her sisters have cycles" );

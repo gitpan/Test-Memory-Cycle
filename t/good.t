@@ -1,4 +1,5 @@
-# $Id: good.t,v 1.1 2003/12/15 03:20:04 andy Exp $
+#!perl -T
+
 use strict;
 
 use Test::Builder::Tester tests => 2;

@@ -1,13 +1,15 @@
 # http://module-build.sourceforge.net/META-spec.html
 #XXXXXXX This is a prototype!!!  It will change in the future!!! XXXXX#
 name:         Test-Memory-Cycle
-version:      0.02
+version:      1.00
 version_from: Cycle.pm
 installdirs:  site
 requires:
-    Devel::Cycle:                  1.01
+    Devel::Cycle:                  1.03
+    Getopt::Long:                  0
+    Test::Builder:                 0
     Test::Builder::Tester:         0
     Test::More:                    0
 
 distribution_type: module
-generated_by: ExtUtils::MakeMaker version 6.17
+generated_by: ExtUtils::MakeMaker version 6.24
