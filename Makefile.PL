@@ -7,7 +7,7 @@ WriteMakefile(
     VERSION_FROM        => 'Cycle.pm', # finds $VERSION
     ABSTRACT            => "Verifies code hasn't left circular references",
     PREREQ_PM => {
-        'Devel::Cycle'          => 1.03,
+        'Devel::Cycle'          => 1.04,  # for weakened ref checking
         'Getopt::Long'          => 0,
         'Test::Builder'         => 0,
         'Test::Builder::Tester' => 0,

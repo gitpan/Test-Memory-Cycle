@@ -1,5 +1,11 @@
 Revision history for Perl extension Test::Memory::Cycle
 
+1.02    Tue May 17 11:22:09 CDT 2005
+        [ENHANCEMENTS]
+        * Added weakened_memory_cycle_ok() and
+          weakened_memory_cycle_exists().  Thanks, Stevan Little.
+
+
 1.00    Sun Jan 23 01:00:32 CST 2005
         [ENHANCEMENTS]
         * Added memory_cycle_exists().  Thanks, Stevan Little.
