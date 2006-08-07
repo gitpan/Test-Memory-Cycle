@@ -3,7 +3,8 @@ Cycle.pm
 MANIFEST
 Makefile.PL
 README
-t/00.load.t
+
+t/00-load.t
 t/cycle-exists.t
 t/family-array.t
 t/family-hash.t

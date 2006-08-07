@@ -1,5 +1,15 @@
 Revision history for Perl extension Test::Memory::Cycle
 
+1.04    Sun Aug  6 22:09:36 CDT 2006
+        [FIXES]
+        * Updated the minimum version requirements.
+
+        [ENHANCEMENTS]
+        * Added support for detecting closures.  Thanks Yuval Kogman.
+
+        [INTERNALS]
+        * Internal code optimizations
+
 1.02    Tue May 17 11:22:09 CDT 2005
         [ENHANCEMENTS]
         * Added weakened_memory_cycle_ok() and

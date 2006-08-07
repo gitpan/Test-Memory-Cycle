@@ -1,22 +1,25 @@
 package Test::Memory::Cycle;
 
+use strict;
+use warnings;
+
 =head1 NAME
 
 Test::Memory::Cycle - Check for memory leaks and circular memory references
 
 =head1 VERSION
 
-Version 1.02
+Version 1.04
 
 =cut
 
-our $VERSION = "1.02";
+our $VERSION = '1.04';
 
 =head1 SYNOPSIS
 
 Perl's garbage collection has one big problem: Circular references
 can't get cleaned up.  A circular reference can be as simple as two
-objects that refer to each other:
+reference that refer to each other:
 
     my $mom = {
         name => "Marilyn Lester",
@@ -42,9 +45,6 @@ cycle where you expect to have one.
 
 =cut
 
-use strict;
-use warnings;
-
 use Devel::Cycle qw( find_cycle find_weakened_cycle );
 use Test::Builder;
 
@@ -66,13 +66,15 @@ sub import {
 
     $Test->exported_to($caller);
     $Test->plan(@_);
+
+    return;
 }
 
 =head1 FUNCTIONS
 
-=head2 C<memory_cycle_ok( I<$object>, I<$msg> )>
+=head2 C<memory_cycle_ok( I<$reference>, I<$msg> )>
 
-Checks that I<$object> doesn't have any circular memory references.
+Checks that I<$reference> doesn't have any circular memory references.
 
 =cut
 
@@ -91,13 +93,14 @@ sub memory_cycle_ok {
         foreach (@$path) {
             my ($type,$index,$ref,$value) = @$_;
 
-            my $str = "Unknown! This should never happen!";
+            my $str = 'Unknown! This should never happen!';
             my $refdisp = _ref_shortname( $ref );
             my $valuedisp = _ref_shortname( $value );
 
-            $str = sprintf("    %s => %s",$refdisp,$valuedisp)               if $type eq 'SCALAR';
-            $str = sprintf("    %s => %s","${refdisp}->[$index]",$valuedisp) if $type eq 'ARRAY';
-            $str = sprintf("    %s => %s","${refdisp}->{$index}",$valuedisp) if $type eq 'HASH';
+            $str = sprintf( '    %s => %s', $refdisp, $valuedisp )               if $type eq 'SCALAR';
+            $str = sprintf( '    %s => %s', "${refdisp}->[$index]", $valuedisp ) if $type eq 'ARRAY';
+            $str = sprintf( '    %s => %s', "${refdisp}->{$index}", $valuedisp ) if $type eq 'HASH';
+            $str = sprintf( '    closure %s => %s', "${refdisp}, $index", $valuedisp ) if $type eq 'CODE';
 
             push( @diags, $str );
         }
@@ -106,14 +109,14 @@ sub memory_cycle_ok {
     find_cycle( $ref, $callback );
     my $ok = !$cycle_no;
     $Test->ok( $ok, $msg );
-    $Test->diag( join( "\n", @diags, "" ) ) unless $ok;
+    $Test->diag( join( "\n", @diags, '' ) ) unless $ok;
 
     return $ok;
 } # memory_cycle_ok
 
-=head2 C<memory_cycle_exists( I<$object>, I<$msg> )>
+=head2 C<memory_cycle_exists( I<$reference>, I<$msg> )>
 
-Checks that I<$object> B<does> have any circular memory references.
+Checks that I<$reference> B<does> have any circular memory references.
 
 =cut
 
@@ -133,9 +136,9 @@ sub memory_cycle_exists {
     return $ok;
 } # memory_cycle_exists
 
-=head2 C<weakened_memory_cycle_ok( I<$object>, I<$msg> )>
+=head2 C<weakened_memory_cycle_ok( I<$reference>, I<$msg> )>
 
-Checks that I<$object> doesn't have any circular memory references, but unlike 
+Checks that I<$reference> doesn't have any circular memory references, but unlike 
 C<memory_cycle_ok> this will also check for weakened cycles produced with 
 Scalar::Util's C<weaken>.
 
@@ -159,10 +162,11 @@ sub weakened_memory_cycle_ok {
             my $str = "Unknown! This should never happen!";
             my $refdisp = _ref_shortname( $ref );
             my $valuedisp = _ref_shortname( $value );
+            my $weak = $is_weakened ? 'w->' : '';
 
-            $str = sprintf("    %s => %s",($is_weakened ? 'w->':'').$refdisp,$valuedisp)               if $type eq 'SCALAR';
-            $str = sprintf("    %s => %s",($is_weakened ? 'w->':'')."${refdisp}->[$index]",$valuedisp) if $type eq 'ARRAY';
-            $str = sprintf("    %s => %s",($is_weakened ? 'w->':'')."${refdisp}->{$index}",$valuedisp) if $type eq 'HASH';
+            $str = sprintf( '    %s%s => %s', $weak, $refdisp, $valuedisp )               if $type eq 'SCALAR';
+            $str = sprintf( '    %s%s => %s', $weak, "${refdisp}->[$index]", $valuedisp ) if $type eq 'ARRAY';
+            $str = sprintf( '    %s%s => %s', $weak, "${refdisp}->{$index}", $valuedisp ) if $type eq 'HASH';
 
             push( @diags, $str );
         }
@@ -176,9 +180,9 @@ sub weakened_memory_cycle_ok {
     return $ok;
 } # weakened_memory_cycle_ok
 
-=head2 C<weakened_memory_cycle_exists( I<$object>, I<$msg> )>
+=head2 C<weakened_memory_cycle_exists( I<$reference>, I<$msg> )>
 
-Checks that I<$object> B<does> have any circular memory references, but unlike 
+Checks that I<$reference> B<does> have any circular memory references, but unlike 
 C<memory_cycle_exists> this will also check for weakened cycles produced with 
 Scalar::Util's C<weaken>.
 
@@ -213,6 +217,7 @@ sub _ref_shortname {
         $sigil = '%' if $sigil eq "HASH ";
         $sigil = '@' if $sigil eq "ARRAY ";
         $sigil = '$' if $sigil eq "REF ";
+        $sigil = '&' if $sigil eq "CODE ";
         $refdisp = $shortnames{ $refstr } = $sigil . $new_shortname++;
     }
 
@@ -223,13 +228,49 @@ sub _ref_shortname {
 
 Written by Andy Lester, C<< <andy @ petdance.com> >>.
 
+=head1 BUGS
+
+Please report any bugs or feature requests to
+C<bug-test-memory-cycle at rt.cpan.org>, or through the web interface at
+L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Test-Memory-Cycle>.
+I will be notified, and then you'll automatically be notified of progress on
+your bug as I make changes.
+
+=head1 SUPPORT
+
+You can find documentation for this module with the perldoc command.
+
+    perldoc Test::Memory::Cycle
+
+You can also look for information at:
+
+=over 4
+
+=item * AnnoCPAN: Annotated CPAN documentation
+
+L<http://annocpan.org/dist/Test-Memory-Cycle>
+
+=item * CPAN Ratings
+
+L<http://cpanratings.perl.org/d/Test-Memory-Cycle>
+
+=item * RT: CPAN's request tracker
+
+L<http://rt.cpan.org/NoAuth/Bugs.html?Dist=Test-Memory-Cycle>
+
+=item * Search CPAN
+
+L<http://search.cpan.org/dist/Test-Memory-Cycle>
+
+=back
+
 =head1 ACKNOWLEDGEMENTS
 
 Thanks to the contributions of Stevan Little, and to Lincoln Stein for writing Devel::Cycle.
 
 =head1 COPYRIGHT
 
-Copyright 2005, Andy Lester, All Rights Reserved.
+Copyright 2006, Andy Lester, All Rights Reserved.
 
 You may use, modify, and distribute this package under the
 same terms as Perl itself.
